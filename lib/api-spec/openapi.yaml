@@ -3,20 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: MIA English companion API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: mia
+    description: MIA conversations, learning, and progress
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +25,303 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /me/profile:
+    get:
+      operationId: getMyProfile
+      tags: [mia]
+      summary: Get the signed-in user's MIA profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    patch:
+      operationId: updateMyProfile
+      tags: [mia]
+      summary: Update the signed-in user's MIA profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [mia]
+      summary: List the signed-in user's conversations
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+    post:
+      operationId: createConversation
+      tags: [mia]
+      summary: Start a conversation with Mia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationInput"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+  /conversations/{id}:
+    get:
+      operationId: getConversation
+      tags: [mia]
+      summary: Open a conversation with messages
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      responses:
+        "200":
+          description: Conversation detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteConversation
+      tags: [mia]
+      summary: Delete a conversation
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /conversations/{id}/messages:
+    post:
+      operationId: sendMessage
+      tags: [mia]
+      summary: Send a message and receive a structured Mia response
+      parameters:
+        - $ref: "#/components/parameters/ConversationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "200":
+          description: Structured Mia response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /vocabulary:
+    get:
+      operationId: listVocabulary
+      tags: [mia]
+      summary: List saved vocabulary
+      responses:
+        "200":
+          description: Vocabulary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VocabularyItem"
+    post:
+      operationId: saveVocabulary
+      tags: [mia]
+      summary: Save a vocabulary item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VocabularyInput"
+      responses:
+        "201":
+          description: Saved vocabulary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VocabularyItem"
+  /progress:
+    get:
+      operationId: getProgress
+      tags: [mia]
+      summary: Get progress derived from real conversation data
+      responses:
+        "200":
+          description: Progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSummary"
 components:
+  parameters:
+    ConversationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    Profile:
+      type: object
+      properties:
+        userId: { type: string }
+        name: { type: string }
+        englishLevel: { type: string }
+        conversationStyle: { type: string }
+        dailyGoal: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [userId, name, englishLevel, conversationStyle, dailyGoal, createdAt, updatedAt]
+    ProfileInput:
+      type: object
+      properties:
+        name: { type: string, maxLength: 80 }
+        englishLevel: { type: string, enum: [beginner, intermediate, advanced] }
+        conversationStyle: { type: string, enum: [friendly, casual, motivating, professional] }
+        dailyGoal: { type: integer, enum: [5, 10, 15] }
+      required: [name, englishLevel, conversationStyle, dailyGoal]
+    Conversation:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        mode: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, title, mode, createdAt, updatedAt]
+    ConversationInput:
+      type: object
+      properties:
+        title: { type: string, maxLength: 120 }
+        mode: { type: string, enum: [casual_chat, english_practice, job_interview, travel, college_life, random_topic] }
+      required: [title, mode]
+    Message:
+      type: object
+      properties:
+        id: { type: integer }
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        correction:
+          anyOf:
+            - $ref: "#/components/schemas/Correction"
+            - type: "null"
+        vocabulary:
+          type: array
+          items:
+            $ref: "#/components/schemas/VocabularySuggestion"
+        createdAt: { type: string, format: date-time }
+      required: [id, role, content, vocabulary, createdAt]
+    ConversationDetail:
+      allOf:
+        - $ref: "#/components/schemas/Conversation"
+        - type: object
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: "#/components/schemas/Message"
+          required: [messages]
+    ChatMessageInput:
+      type: object
+      properties:
+        content: { type: string, minLength: 1, maxLength: 4000 }
+      required: [content]
+    Correction:
+      type: object
+      properties:
+        original: { type: string }
+        better: { type: string }
+        explanation: { type: string }
+      required: [original, better]
+    VocabularySuggestion:
+      type: object
+      properties:
+        word: { type: string }
+        meaning: { type: string }
+        example: { type: string }
+      required: [word, meaning, example]
+    ChatResponse:
+      type: object
+      properties:
+        message:
+          $ref: "#/components/schemas/Message"
+        correction:
+          anyOf:
+            - $ref: "#/components/schemas/Correction"
+            - type: "null"
+        vocabulary:
+          type: array
+          items:
+            $ref: "#/components/schemas/VocabularySuggestion"
+        conversationIntent: { type: string }
+        emotion: { type: string }
+        shouldContinue: { type: boolean }
+      required: [message, correction, vocabulary, conversationIntent, emotion, shouldContinue]
+    VocabularyInput:
+      $ref: "#/components/schemas/VocabularySuggestion"
+    VocabularyItem:
+      type: object
+      properties:
+        id: { type: integer }
+        word: { type: string }
+        meaning: { type: string }
+        example: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, word, meaning, example, createdAt]
+    ProgressSummary:
+      type: object
+      properties:
+        conversationsCompleted: { type: integer }
+        messagesExchanged: { type: integer }
+        vocabularySaved: { type: integer }
+        correctionsMade: { type: integer }
+        practiceDays: { type: integer }
+        speakingSessions: { type: integer }
+        minutesToday: { type: integer }
+        dailyGoal: { type: integer }
+      required: [conversationsCompleted, messagesExchanged, vocabularySaved, correctionsMade, practiceDays, speakingSessions, minutesToday, dailyGoal]
 
