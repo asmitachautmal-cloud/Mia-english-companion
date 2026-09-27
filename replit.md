@@ -1,6 +1,6 @@
-# [Project name]
+# MIA English Companion
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A premium AI English conversation companion that helps people speak naturally through warm, low-pressure conversations with Mia.
 
 ## Run & Operate
 
@@ -22,23 +22,33 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/mia-companion/src/App.tsx` — routes, interaction state, and reusable shell components for the MIA prototype
+- `artifacts/mia-companion/src/index.css` — MIA typography, palette, motion, grain texture, and shared utility styles
+- `artifacts/mia-companion/package.json` — frontend package scripts and dependencies
+- `artifacts/api-server` — shared API scaffold, currently unused by the frontend-first prototype
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first build is intentionally frontend-first with local prototype state; no AI, speech, auth, or persistence is faked behind the UI.
+- Wouter provides route-level navigation for the landing page, private talk room, voice room, and progress view.
+- Mia is rendered as an authored CSS illustration so the prototype does not depend on placeholder image services.
+- Shared conversation and navigation patterns stay in the single artifact entry point until backend contracts are defined.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Landing experience that positions Mia as a private English conversation companion.
+- Talk room with seeded conversation, send/reply simulation, topic selection, prompt insertion, and listening state.
+- Voice room with start, pause, resume, and animated listening treatment.
+- Progress space with authored activity history, time spent, and dismissible personal insight.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+The user wants a premium, warm, editorial companion experience rather than a generic chatbot, school app, or SaaS dashboard.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- The MIA frontend workflow supplies `PORT` and `BASE_PATH`; use the managed artifact workflow rather than starting Vite manually.
+- The app is currently a local prototype; connect real LLM, speech-to-text, text-to-speech, auth, and progress persistence only after defining their contracts.
 
 ## Pointers
 

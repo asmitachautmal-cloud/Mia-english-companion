@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MIA English Companion"
+description = "A premium AI English conversation companion that helps people speak more naturally through warm, low-pressure conversations, voice practice, and personal progress insights."
+version = "1.0.0"
+id = "artifacts/mia-companion"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23551
+
+[services.development]
+run = "pnpm --filter @workspace/mia-companion run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mia-companion", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/mia-companion/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23551"
+BASE_PATH = "/"
